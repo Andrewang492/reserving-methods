@@ -2,7 +2,6 @@ library(lubridate)
 library(dplyr)
 
 policies <- read.csv("ACTL31425110AssignmentData2022.csv")
-View(policies)
 policies$claim_loss_date <- ifelse(policies$claim_loss_date == "", NA, policies$claim_loss_date)
 
 #strptime(policies[142,]$claim_loss_date, format="%Y-%m-%d %H:%M:%S+%z", tz="GMT")
@@ -13,11 +12,11 @@ policies$term_expiry_date <- ymd_hms(policies$term_expiry_date)
 policies$accident_month <- ymd(policies$accident_month)
 
 policies <- policies %>% mutate(exposure_days = exposure * 365)
-policies %>% 
-  select(accident_month, claim_loss_date) %>% 
-  filter(!is.na(claim_loss_date)) %>%
-  filter(month(claim_loss_date) != month(accident_month) |
-  (year(claim_loss_date) != year(accident_month)))
+#policies %>% 
+#  select(accident_month, claim_loss_date) %>% 
+#  filter(!is.na(claim_loss_date)) %>%
+#  filter(month(claim_loss_date) != month(accident_month) |
+#  (year(claim_loss_date) != year(accident_month)))
 
 claims  <- policies %>% filter(!is.na(total_claims_cost) & !is.na(claim_loss_date))
 
@@ -55,10 +54,11 @@ policies %>%
             start_date = min(term_start_date)) #assume policies are continuous (they are currently split up into years.)
 
 # analysis on tenure
-
-claims %>% 
+year.tenure.costs <- claims %>% 
   mutate(year = year(term_start_date)) %>%
   group_by(policy_tenure, year) %>%
   summarise(total_cost = sum(total_claims_cost))
-
-
+library(tidyr)
+runoff <- data.frame(pivot_wider(year.tenure.costs, names_from = policy_tenure, values_from = total_cost ))
+rownames(runoff) <- runoff[,1]
+runoff <- runoff[,-1]
